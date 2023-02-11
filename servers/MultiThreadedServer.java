@@ -1,6 +1,8 @@
 package servers;
 
+import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 import computation.AsyncSearchSimulator;
 
@@ -19,6 +21,16 @@ public class MultiThreadedServer implements Runnable {
 
         while (!isStopped()) {
             // wait for a connection
+            Socket clientSocket = null;
+            try {
+                // wait for a client to connect
+                clientSocket = this.serverSocket.accept();
+            } catch (IOException e) {
+                if (isStopped()) {
+                    System.out.println("Server Stopped.");
+                    return;
+                }
+            }
 
             // on receiving a request, execute the heavy computation in a new thread
             new Thread(
@@ -36,10 +48,20 @@ public class MultiThreadedServer implements Runnable {
     }
 
     public synchronized void stop() {
-        // implementation to stop the server from the main thread if needed
+        this.isStopped = true;
+        try {
+            this.serverSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to close server", e);
+        }
     }
 
     private void openServerSocket() {
-        // open server socket here
+        this.isStopped = false;
+        try {
+            this.serverSocket = new ServerSocket(this.serverPort);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to start server", e);
+        }
     }
 }
