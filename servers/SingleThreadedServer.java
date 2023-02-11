@@ -2,6 +2,7 @@ package servers;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 import computation.SearchSimulator;
 
@@ -19,12 +20,20 @@ public class SingleThreadedServer implements Runnable {
         openServerSocket();
 
         while (!isStopped()) {
+            Socket clienSocket = null;
+
             // wait for a connection
             // on receiving a request, execute the heavy computation
             try {
-                SearchSimulator.processClientRequest();
+                clienSocket = this.serverSocket.accept();
             } catch (Exception e) {
-                throw new RuntimeException("Failed to start search simulation", e);
+                throw new RuntimeException("Failed to connect to server", e);
+            }
+
+            try {
+                SearchSimulator.processClientRequest(clienSocket);
+            } catch (Exception e) {
+                //
             }
         }
 
